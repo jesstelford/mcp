@@ -480,8 +480,7 @@ function cmdChannelPay(req)
 	// load and validate params
 	var params = req.params[0];
 	if (!('channel.id' in params) ||
-	    !('signature' in params) ||
-	    !('amount' in params))
+	    !('tx.payment' in params))
 		return jrpcServer.err(req, -10, 'missing params');
 
 	var channelId = params["channel.id"];
@@ -491,19 +490,14 @@ function cmdChannelPay(req)
 	if (channel.state != 'active')
 		return jrpcServer.err(req, -12, 'invalid channel state');
 
-	var sigRaw = new Buffer(params.signature, 'hex');
-	if (!sigRaw || (sigRaw.length < 32) || (sigRaw.length > 128))
-		return jrpcServer.err(req, -41, 'invalid signature fmt');
-
-	var amount = parseInt(params.amount);
-	if (!amount || (amount < 0))
-		return jrpcServer.err(req, -42, 'invalid amount');
-	if (amount > channel.val_cli)
-		return jrpcServer.err(req, -43, 'insufficient funds');
-
-	if (!updatePayTx(channel, sigRaw, amount))
-		return jrpcServer.err(req, -44, 'payment failed');
-
+	var txPayment = decodeHexTx(params["tx.payment"]);
+	if (!txPayment)
+		return jrpcServer.err(req, -15, 'payment transaction decode failed');
+ 
+	// TODO: FIXME
+	if (!true /* check tx.payment is valid */)
+ 		return jrpcServer.err(req, -44, 'payment failed');
+ 
 	var result = true;
 	return jrpcServer.ok(req, result);
 }
@@ -571,6 +565,8 @@ function start_http()
 		pass: cfg.bitcoind_pass || 'pass',
 		protocol: cfg.bitcoind_protocol || 'http',
 	});
+
+	console.log("Awaiting Payment Channel Connections...\n");
 }
 
 function read_db()
