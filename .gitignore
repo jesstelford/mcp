@@ -11,3 +11,4 @@ server.csr
 server.wallet
 servercli.wallet
 
+node_modules/
