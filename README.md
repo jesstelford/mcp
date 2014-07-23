@@ -82,7 +82,7 @@ Where "method" can be one of:
 ```
 "params": {
   "channel.id": , // The id returned from "channel.open"
-  "tx.commit": , // The hex encoded signature from when the client signed T1 (committing to the agreement)
+  "tx.commit": , // The hex encoded transaction from when the client signed T1 (committing to the agreement)
   "tx.firstPayment": , // The signed transaction (T3) for the first payment, which is just a full refund payment to the client
 }
 ```
