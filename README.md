@@ -41,13 +41,13 @@ Where "method" can be one of:
 
 #### POST data
 
-`"params"` can be an empty array
+`"params"` must be an array with index 0 being an object: `[{}]`
 
 #### result
 
 ```
 {
-  "pubkey": , // pub key of the server for this channel (also: "channel.id" for later"
+  "pubkey": , // pub key of the server for this channel (also: "channel.id" for later)
   "timelock.min": , // earliest time the refund transaction can be processed
   "timelock.max": , // latest time the refund transaction can be processed
   "timelock.prefer": , // preferred time the refund transaction should be processed
