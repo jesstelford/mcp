@@ -26,6 +26,7 @@ program
 	.version(VERSION)
 	.option('--init', 'Initialize database')
 	.option('-c, --config <file>', 'key=value configuration file')
+	.option('--livenet', 'Use livenet (default: testnet)')
 	.parse(process.argv);
 
 var logger = new (winston.Logger)({
@@ -594,11 +595,23 @@ function read_db()
 	}
 }
 
+function set_network(netname)
+{
+	wallet.setNetwork(netname);
+	network = wallet.network;
+}
+
 function main()
 {
 	if (!process.env.SERVERD) {
 		console.error("SERVERD environment variable must be set to DB passphrase");
 		return;
+	}
+
+	if (program.livenet) {
+		set_network('livenet');
+	} else {
+		set_network('testnet');
 	}
 
 	read_db();
