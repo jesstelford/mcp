@@ -36,11 +36,12 @@ var logger = new (winston.Logger)({
 });
 var cfg_fn = program.config || 'serverd.cfg';
 var cfg = kvfile.readSync(cfg_fn);
-if (cfg.log)
+if (cfg.log) {
 	logger.add(winston.transports.File, { 
 		filename: cfg.log,
 		timestamps: true,
 	});
+}
 
 // load global configuration
 var db_fn = cfg.db || 'serverd.db';
@@ -65,10 +66,12 @@ var network = undefined;
 
 function stop_all()
 {
-	if (httpsrv)
+	if (httpsrv) {
 		httpsrv.close();
-	if (admsrv)
+	}
+	if (admsrv) {
 		admsrv.close();
+	}
 }
 
 function dbWriteSync()
@@ -87,10 +90,12 @@ function dbWriteSync()
 function decodeHexTx(hexStr)
 {
 	var reHex = /^[0-9a-zA-Z]+$/;
-	if (!reHex.test(hexStr))
+	if (!reHex.test(hexStr)) {
 		return undefined;
-	if ((hexStr.length % 2) == 1)
+	}
+	if ((hexStr.length % 2) == 1) {
 		return undefined;
+	}
 
 	var txbuf = new Buffer(hexStr, 'hex');
 	var tx = new Transaction();
@@ -102,8 +107,9 @@ function decodeHexTx(hexStr)
 function decodePubkey(hexStr)
 {
 	var buf = new Buffer(hexStr, 'hex');
-	if (!buf)
+	if (!buf) {
 		return undefined;
+	}
 	var key = new KeyModule.Key();
 	key.public = buf;
 
@@ -114,8 +120,9 @@ function loadChannelKey(channelIdStr)
 {
 	var channelAddr = new Address(channelIdStr);
 	var keyObj = wallet.findKeyHash(channelAddr.payload());
-	if (!keyObj)
+	if (!keyObj) {
 		return undefined;
+	}
 
 	var key = new WalletKey({network: network});
 	key.fromObj(keyObj);
@@ -165,12 +172,14 @@ function validRefundTx(channel, tx)
 	var lock_time_min = birthday + timelock_min;
 	var lock_time_max = birthday + timelock_max;
 	if ((tx.lock_time < lock_time_min) ||
-	    (tx.lock_time > lock_time_max))
+	    (tx.lock_time > lock_time_max)) {
 		return false;
+	}
 
 	// any number of inputs or outputs
-	if ((tx.ins.length < 1) || (tx.outs.length < 1))
+	if ((tx.ins.length < 1) || (tx.outs.length < 1)) {
 		return false;
+	}
 
 	return true;
 }
@@ -182,33 +191,41 @@ function cmdChannelSetRefund(req)
 	if (!('channel.id' in params) ||
 	    !('pubkey' in params) ||
 	    !('tx' in params) ||
-	    !('txInIdx' in params))
+	    !('txInIdx' in params)) {
 		return jrpcServer.err(req, -10, 'missing params');
+	}
 
 	var channelId = params["channel.id"];
 	var channel = db.channels[channelId];
-	if (!channel)
+	if (!channel) {
 		return jrpcServer.err(req, -10, 'invalid channel id');
-	if (channel.state != 'open')
+	}
+	if (channel.state != 'open') {
 		return jrpcServer.err(req, -12, 'invalid channel state');
+	}
 	var channelKey = loadChannelKey(channel.id);
-	if (!channelKey)
+	if (!channelKey) {
 		return jrpcServer.err(req, -22, 'internal server error');
+	}
 
 	var remotePubkey = decodePubkey(params.pubkey);
-	if (!remotePubkey)
+	if (!remotePubkey) {
 		return jrpcServer.err(req, -16, 'invalid pubkey');
+	}
 
 	var tx = decodeHexTx(params.tx);
-	if (!tx)
+	if (!tx) {
 		return jrpcServer.err(req, -15, 'transaction decode failed');
-	if (!validRefundTx(channel, tx))
+	}
+	if (!validRefundTx(channel, tx)) {
 		return jrpcServer.err(req, -21, 'invalid refund transaction');
+	}
 	
 	var inIdx = parseInt(params.txInIdx);
-	if ((inIdx == NaN) || (inIdx < 0) || (inIdx >= tx.ins.length))
+	if ((inIdx == NaN) || (inIdx < 0) || (inIdx >= tx.ins.length)) {
 		return jrpcServer.err(req, -21,
 				      'invalid TX input ' + inIdx.toString());
+	}
 
 	// build scriptPubKey according to standard protocol
 	var k1 = remotePubkey.public;
@@ -252,9 +269,11 @@ function validCommitTx(tx, msigAddrStr)
 	var scriptHashStr = msigAddr.payload().toString();
 
 	var match = -1;
-	for (var i = 0; i < tx.outs.length; i++)
-		if (matchScript(tx.outs[i].s, scriptHashStr))
+	for (var i = 0; i < tx.outs.length; i++) {
+		if (matchScript(tx.outs[i].s, scriptHashStr)) {
 			match = i;
+		}
+	}
 	if (match < 0) {
 		return { result: false };
 	}
@@ -273,8 +292,9 @@ function findTxOutpt(tx, outpt)
 	for (var i = 0; i < tx.ins.length; i++) {
 		var txin = tx.ins[i];
 		if ((txin.getOutpointIndex() == outpt.n) &&
-		    (txin.getOutpointHash().toString() == hashStr))
+		    (txin.getOutpointHash().toString() == hashStr)) {
 			return i;
+		}
 	}
 
 	return -1;
@@ -288,8 +308,9 @@ function findOutByAddr(tx, pubkey)
 		var txout = tx.outs[i];
 		var script = new Script(txout.s);
 		if (script.isPubkeyHash() &&
-		    script.chunks[2].toString() == pkhStr)
+		    script.chunks[2].toString() == pkhStr) {
 			return i;
+		}
 	}
 
 	return -1;
@@ -374,38 +395,47 @@ function cmdChannelCommit(req)
 	var params = req.params[0];
 	if (!('channel.id' in params) ||
 	    !('tx.commit' in params) ||
-	    !('tx.firstPayment' in params))
+	    !('tx.firstPayment' in params)) {
 		return jrpcServer.err(req, -10, 'missing params');
+	}
 
 	var channelId = params["channel.id"];
 	var channel = db.channels[channelId];
-	if (!channel)
+	if (!channel) {
 		return jrpcServer.err(req, -10, 'invalid channel id');
-	if (channel.state != 'signedRefund')
+	}
+	if (channel.state != 'signedRefund') {
 		return jrpcServer.err(req, -12, 'invalid channel state');
+	}
 	var channelKey = loadChannelKey(channel.id);
-	if (!channelKey)
+	if (!channelKey) {
 		return jrpcServer.err(req, -22, 'internal server error');
+	}
 	var remotePubkey = decodePubkey(channel.remotePubkey);
-	if (!remotePubkey)
+	if (!remotePubkey) {
 		return jrpcServer.err(req, -23, 'internal server error');
+	}
 
 	var txCommit = decodeHexTx(params["tx.commit"]);
-	if (!txCommit)
+	if (!txCommit) {
 		return jrpcServer.err(req, -15, 'transaction decode failed');
+	}
 
 	var txFirstPay = decodeHexTx(params["tx.firstPayment"]);
-	if (!txFirstPay)
+	if (!txFirstPay) {
 		return jrpcServer.err(req, -15, 'transaction 2 decode failed');
+	}
 
 	var ctxInfo = validCommitTx(txCommit, channel.msigAddr);
-	if (!ctxInfo.result)
+	if (!ctxInfo.result) {
 		return jrpcServer.err(req, -31, 'commit tx invalid');
+	}
 
 	var ptxInfo = validFirstPay(channel, ctxInfo, txCommit, txFirstPay,
 				    channelKey, remotePubkey);
-	if (!ptxInfo.result)
+	if (!ptxInfo.result) {
 		return jrpcServer.err(req, -31, 'firstPayment tx invalid');
+	}
 
 	// FIXME: broadcast txCommit, once validated
 
@@ -465,8 +495,9 @@ function updatePayTx(channel, sigRaw, amount)
 	var k1_sig = sigRaw;
 	var sigHash = tx.hashForSignature(scriptPubKey, 0,
 					  Transaction.SIGHASH_ALL);
-	if (!k1_pubkey.verifySignatureSync(sigHash, k1_sig))
+	if (!k1_pubkey.verifySignatureSync(sigHash, k1_sig)) {
 		return false;
+	}
 
 	// store updated payment TX
 	channel.txLastPayment = buffertools.toHex(tx.serialize());
@@ -482,23 +513,28 @@ function cmdChannelPay(req)
 	// load and validate params
 	var params = req.params[0];
 	if (!('channel.id' in params) ||
-	    !('tx.payment' in params))
+	    !('tx.payment' in params)) {
 		return jrpcServer.err(req, -10, 'missing params');
+	}
 
 	var channelId = params["channel.id"];
 	var channel = db.channels[channelId];
-	if (!channel)
+	if (!channel) {
 		return jrpcServer.err(req, -10, 'invalid channel id');
-	if (channel.state != 'active')
+	}
+	if (channel.state != 'active') {
 		return jrpcServer.err(req, -12, 'invalid channel state');
+	}
 
 	var txPayment = decodeHexTx(params["tx.payment"]);
-	if (!txPayment)
+	if (!txPayment) {
 		return jrpcServer.err(req, -15, 'payment transaction decode failed');
+	}
  
 	// TODO: FIXME
-	if (!true /* check tx.payment is valid */)
+	if (!true /* check tx.payment is valid */) {
  		return jrpcServer.err(req, -44, 'payment failed');
+	}
  
 	var result = true;
 	return jrpcServer.ok(req, result);
@@ -508,8 +544,9 @@ function handle_jsonrpc(req)
 {
 	if (!Array.isArray(req.params) ||
 	    (req.params.length != 1) ||
-	    (typeof req.params[0] != 'object'))
+	    (typeof req.params[0] != 'object')) {
 		return jrpcServer.err(req, -2, 'invalid params');
+	}
 
 	switch (req.method) {
 	case "channel.open":
