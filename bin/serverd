@@ -149,6 +149,7 @@ function cmdChannelOpen(req)
 	dbWriteSync();
 
 	var result = {
+		"channel.id": obj.addr,
 		"pubkey": obj.pub,
 		"timelock.min": birthday + timelock_min,
 		"timelock.max": birthday + timelock_max,

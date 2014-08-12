@@ -47,7 +47,8 @@ Where "method" can be one of:
 
 ```
 {
-  "pubkey": , // pub key of the server for this channel (also: "channel.id" for later)
+  "channel.id": , // Unique ID for this payment channel to be used by following methods
+  "pubkey": , // pub key of the server for this channel
   "timelock.min": , // earliest time the refund transaction can be processed
   "timelock.max": , // latest time the refund transaction can be processed
   "timelock.prefer": , // preferred time the refund transaction should be processed
