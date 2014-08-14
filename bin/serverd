@@ -110,10 +110,9 @@ function decodePubkey(hexStr)
 	if (!buf) {
 		return undefined;
 	}
-	var key = new KeyModule.Key();
-	key.public = buf;
-
-	return key;
+	return {
+		public: buf
+	}
 }
 
 function loadChannelKey(channelIdStr)
@@ -332,11 +331,6 @@ function validFirstPay(channel, ctxInfo, txCommit, txFirstPay,
 		console.log("vfp: seq");
 		return { result: false };
 	}
-
-	// load K1
-	var k1_pubkeyBuf = new Buffer(channel.remotePubkey, 'hex');
-	var k1_pubkey = new KeyModule.Key();
-	k1_pubkey.public = k1_pubkeyBuf;
 	
 	// sig empty-sig p2sh-script
 	var scriptSig = new Script(txin.s);
@@ -460,7 +454,7 @@ function updatePayTx(channel, sigRaw, amount)
 {
 	// load K1
 	var k1_pubkeyBuf = new Buffer(channel.remotePubkey, 'hex');
-	var k1_pubkey = new KeyModule.Key();
+	var k1_pubkey = new KeyModule();
 	k1_pubkey.public = k1_pubkeyBuf;
 
 	// move value cli -> srv
